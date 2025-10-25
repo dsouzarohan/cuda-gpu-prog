@@ -1,0 +1,52 @@
+# Executables without extension (but not directories or Makefiles)
+*
+!*/
+!**/
+!**/*.*
+!**/Makefile
+
+# Compiled Object files
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Executable files (common extensions)
+*.exe
+*.out
+*.bin
+*.deb
+*.rpm
+
+# Compiled Static libraries
+*.lib
+*.a
+
+# CUDA specific
+*.ptx
+*.fatbin
+*.cubin
+*.gpu
+
+# Build directories
+build/
+dist/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
