@@ -17,9 +17,17 @@ int main() {
     size_t size = sizeof(h_arr_A) / sizeof(h_arr_A[0]);
     printf("Size of arrays is %zu\n", size);
 
+    // remember that with CUDA, we always work with two memory spaces, Host and Device
+    // we can't just use the "host" memory directly on the GPU
+    // we must create and manage a device side pointer via a device pointer, the below are the same
+
     int* d_arr_A;
     int* d_arr_B;
     int* d_arr_C; // device pointer
+
+    // cudaMalloc also expects a pointer to this pointer, &d_arr that is the address of the pointer variable
+    // so CUDA can fill it with the GPU memory address
+    // so d_arr_A will eventually point to memory in VRAM, which is why we can't really even derefence it here, will lead to a segfault
 
     // printf("cudaMalloc d_arr_A");
     cudaMalloc((void**) &d_arr_A, size * sizeof(int));
@@ -28,6 +36,8 @@ int main() {
     // printf("cudaMalloc d_arr_C");
     cudaMalloc((void**) &d_arr_C, size * sizeof(int));
 
+
+    // we use cudaMemcpy to copy from device to host, and vice versa
     cudaMemcpy(d_arr_A, h_arr_A, size * sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(d_arr_B, h_arr_B, size * sizeof(int), cudaMemcpyHostToDevice);
     
