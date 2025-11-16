@@ -144,3 +144,80 @@ int main() {
 
   return 0;
 }
+
+/*
+
+Built-in CUDA variables
+These are automatically provided by CUDA for each thread:
+
+1. blockIdx (block index)
+Type: dim3
+Meaning: Index of the current block within the grid
+In code: blockIdx.x ranges from 0 to 39062 (since num_blocks = 39063)
+
+2. blockDim (block dimensions)
+Type: dim3
+Meaning: Size of each block (number of threads per block)
+In code: blockDim.x = 256 (from BLOCK_SIZE)
+
+3. threadIdx (thread index)
+Type: dim3
+Meaning: Index of the current thread within its block
+In code: threadIdx.x ranges from 0 to 255 (within each block)
+
+How they combine to compute the global index
+
+The formula int i = blockIdx.x * blockDim.x + threadIdx.x; computes the global
+thread index.
+
+Concrete examples with above values:
+
+Example 1: First thread in first block
+blockIdx.x = 0
+threadIdx.x = 0
+i = 0 * 256 + 0 = 0 → processes a[0] + b[0]
+
+Example 2: Last thread in first block
+blockIdx.x = 0
+threadIdx.x = 255
+i = 0 * 256 + 255 = 255 → processes a[255] + b[255]
+
+Example 3: First thread in second block
+blockIdx.x = 1
+threadIdx.x = 0
+i = 1 * 256 + 0 = 256 → processes a[256] + b[256]
+
+Example 4: Middle thread in middle block
+blockIdx.x = 100
+threadIdx.x = 128
+i = 100 * 256 + 128 = 25,728 → processes a[25728] + b[25728]
+
+Example 5: Last thread in last block
+blockIdx.x = 39062 (last block)
+threadIdx.x = 255 (last thread)
+i = 39062 * 256 + 255 = 9,999,872 + 255 = 10,000,127
+
+Note: This last example shows why the if (i < n) check is important. With N =
+10,000,000, the thread computing i = 10,000,127 is out of bounds, so the guard
+prevents accessing invalid memory.
+
+Grid (39063 blocks total):
+┌─────────┬─────────┬─────────┬─────────┬─────────┐
+│ Block 0 │ Block 1 │ Block 2 │ ...     │ Block   │
+│         │         │         │         │ 39062   │
+│ 256     │ 256     │ 256     │         │ 256     │
+│ threads │ threads │ threads │         │ threads │
+└─────────┴─────────┴─────────┴─────────┴─────────┘
+   ↑         ↑
+   │         │
+blockIdx.x  blockIdx.x
+  = 0        = 1
+
+Within each block:
+┌─────┬─────┬─────┬─────┬─────┐
+│  0  │  1  │  2  │ ... │ 255 │
+└─────┴─────┴─────┴─────┴─────┘
+  ↑
+  │
+threadIdx.x
+*/
