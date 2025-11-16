@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 10000000 // vector size = 100 million
+#define N 100000000 // vector size = 100 million
 #define BLOCK_SIZE 256
 
 // CPU vector addition
@@ -68,6 +68,9 @@ int main() {
 
   // Define grid and block dimensions
   int num_blocks = (N + BLOCK_SIZE - 1) / BLOCK_SIZE;
+  // this is basically performing ceil using integer division
+  // (N + BLOCK_SIZE - 1) / BLOCK_SIZE is equivalent to ceil(N / BLOCK_SIZE)
+  // using integer division
 
   // TODO: Warm-up runs
   printf("Performing warm-up runs...\n");
@@ -220,4 +223,27 @@ Within each block:
   ↑
   │
 threadIdx.x
+
+Grid with 5 blocks (each has 256 threads):
+
+Block 0          Block 1          Block 2          Block 3          Block 4
+┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐
+│ 256     │      │ 256     │      │ 256     │      │ 256     │      │ 256     │
+│ threads │      │ threads │      │ threads │      │ threads │      │ threads │
+└─────────┘      └─────────┘      └─────────┘      └─────────┘      └─────────┘
+     ↑                ↑                ↑                ↑                ↑
+blockIdx.x=0    blockIdx.x=1    blockIdx.x=2    blockIdx.x=3    blockIdx.x=4
+blockDim.x=256  blockDim.x=256  blockDim.x=256  blockDim.x=256  blockDim.x=256
+
+__global__ void vector_add_gpu(float *a, float *b, float *c, int n) {
+  // blockDim.x is ALWAYS 256 for every thread
+  // blockIdx.x is DIFFERENT for each block (0, 1, 2, ..., 39062)
+  // threadIdx.x is DIFFERENT for each thread within a block (0, 1, 2, ..., 255)
+
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  //        ↑            ↑            ↑
+  //        varies      constant     varies
+  //        (0-39062)   (256)        (0-255)
+}
+
 */
