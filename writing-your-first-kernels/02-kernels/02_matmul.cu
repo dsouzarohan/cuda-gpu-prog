@@ -26,6 +26,28 @@ __global__ void mat_mul_gpu(float *A, float *B, float *C, int m, int n, int k) {
   int i = blockIdx.y * blockDim.y + threadIdx.y; // row
   int j = blockIdx.x * blockDim.x + threadIdx.x; // col
 
+  /*  
+  CUDA treats:
+  x → fast-changing dimension
+  y → slow-changing dimension 
+  z → slowest-changing dimension (not being used here)
+
+  This mirrors how we index:
+  columns change fastest
+  rows change slower
+  
+  This is why we use y here for "row", that may feel counter-intuitive at first
+  row major memory layout: [ row ][ column ]
+                             slow     fast
+
+  The innermost dimension (columns) must be mapped to x, because CUDA's x dimension is the fastest-moving parallel index.
+  That mapping preserves:
+  - coalesced memory access
+  - linear memory traversal
+  - warp execution efficiency
+  - standard row-major indexing
+  */
+
   if (i < m && j < n) { // ensure we are accessing the right threads
     float sum = 0.0;
     for (int p = 0; p < k; p++) {
