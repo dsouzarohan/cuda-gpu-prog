@@ -27,11 +27,11 @@ __global__ void mat_mul_gpu(float *A, float *B, float *C, int m, int n, int k) {
   int j = blockIdx.x * blockDim.x + threadIdx.x; // col
 
   if (i < m && j < n) { // ensure we are accessing the right threads
-    double sum = 0.0;
+    float sum = 0.0;
     for (int p = 0; p < k; p++) {
-      double a_rp = A[i * k + p]; // A[i, p]
-      double b_cp = B[p * n + j]; // B[p, j]
-      sum += a_rp * b_cp;
+      float a_ip = A[i * k + p]; // A[i, p]
+      float b_pj = B[p * n + j]; // B[p, j]
+      sum += a_ip * b_pj;
     }
     C[i * n + j] = sum; // C[i, j]
   }
@@ -47,15 +47,52 @@ void mat_mul_cpu(float *A, float *B, float *C, int m, int n, int k) {
 
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
-      double sum = 0.0;
+      float sum = 0.0;
       for (int p = 0; p < k; p++) {
-        double a_ip = A[i * k + p]; // A[i, p]
-        double b_pj = B[p * n + j]; // C[p, j]
+        float a_ip = A[i * k + p]; // A[i, p]
+        float b_pj = B[p * n + j]; // C[p, j]
         sum += a_ip * b_pj;
       }
       C[i * n + j] = sum; // C[i, j]
     }
   }
+
+  /*Basic idea is that when treating matrices as arrays
+  * To access an array as a matrix (M,N) with two loops
+  * for i -> M // iterates over rows
+  *   for j -> N // iterates over columns
+  *     mat[i][j] is basically arr[i * N + j]
+  * 
+  * The column dimension/length always serves as the stride at least in this case
+  * This is because when i moves to the next row, it "skips" or "passes" exactly "N" (column) in each pass
+  *
+  * In matrix multiplication, we use the same two loops
+  * But we also need a third that iterates along the common dimension "K" for a matmul of (M,K) and (K, N)
+  * For the dot product, we obviously go through row vectors from the first matrix and column vectors from the second matrix
+  * So the third loop is
+
+  * for i -> M: // iterates over rows
+  *   for j -> N: // iterates over columns
+  *     sum = 0
+  *     for p -> K: // common dimension in (M,K) @ (K,N)
+          // i here still iterates over rows; K is the column stride for matrix A as it is (M,K), p is going across the ith row (along the columns)
+          A[i, p] = A[i * K + p]
+
+          // p is used here to iterate over the row, A stays in ith row, but p goes across the jth column (along the rows)
+          B[p, j] = B[p * N + j]
+
+          // For A:
+          // i is fixed → stay on the same row.
+          // p runs from 0 to K-1 → move across the row (columns).
+          // Access: A[i * K + p].
+
+          // For B:
+          // j is fixed → stay in the same column.
+          // p runs from 0 to K-1 → move down the column (across rows).
+          // sum += A[i, p] * B[p, j]
+        
+        C[i, j] = C[i * N + j] = sum
+  */
 }
 
 // get time
