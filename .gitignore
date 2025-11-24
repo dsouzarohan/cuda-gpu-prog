@@ -50,3 +50,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
+
+# NSightCompute files
+*.nsys-rep
+*.sqlite
